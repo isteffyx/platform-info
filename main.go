@@ -5,11 +5,11 @@
 package main
 
 import (
-	"fmt"
-	p "intel/isecl/lib/platform-info/v3/platforminfo"
-	"intel/isecl/lib/common/v3/validation"
-	"os"
 	"encoding/json"
+	"fmt"
+	"intel/isecl/lib/common/v3/validation"
+	p "intel/isecl/lib/platform-info/v3/platforminfo"
+	"os"
 )
 
 func main() {
@@ -21,7 +21,7 @@ func main() {
 			fmt.Printf("main: Error while fetching platform info: %s", err)
 			os.Exit(1)
 		}
-	
+
 		// serialize to json
 		b, err := json.MarshalIndent(platformInfo, "", "\t")
 		if err != nil {
