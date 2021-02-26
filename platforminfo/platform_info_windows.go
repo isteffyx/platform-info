@@ -75,7 +75,7 @@ func BiosVersion() (string, error) {
 	return biosVersion, err
 }
 
-// HardwareUUID retireves the host hardware UUID.
+// HardwareUUID retrieves the host hardware UUID.
 // An example of the host hardware UUID is 4219B2F5-C25F-6AF2-573C-35B0DF557236
 func HardwareUUID() (string, error) {
 	/*
@@ -243,7 +243,7 @@ func tpmEnabledAndVersion() (bool, string, error) {
 	return tpmEnabled, tpmVersion, err
 }
 
-// HostName retireves the network hostname.
+// HostName retrieves the network hostname.
 // An example of the host name is WIN-GLU9NEPGT1L
 func HostName() (string, error) {
 	/*

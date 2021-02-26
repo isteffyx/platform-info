@@ -14,8 +14,7 @@ import (
 )
 
 const (
-	BindingKeyCertificatePath = "/etc/workload-agent/bindingkey.pem"
-	WLAGENT                   = "wlagent"
+	Wlagent = "wlagent"
 )
 
 // Struct used to hold the current host's platform information that can be encoded/decoded to
@@ -53,7 +52,6 @@ const (
 //             "enabled": true,
 //             "meta": {
 //                 "tpm_version": "2.0",
-//                 "pcr_banks": "SHA1_SHA256"
 //             }
 //         }
 //     },
@@ -82,7 +80,6 @@ const (
 //             "enabled": true,
 //             "meta": {
 //                 "tpm_version": "2.0",
-//                 "pcr_banks": "SHA1_SHA256"
 //             }
 //         }
 //    }, //
@@ -98,8 +95,7 @@ const (
 // 	        "TPM": {
 // 	            "enabled": true,
 // 	            "meta": {
-// 	                "tpm_version": "2.0",
-// 	                "pcr_banks": "SHA1_SHA256"
+// 	                "tpm_version": "2.0"
 // 	            }
 // 	        },
 // 	        "SUEFI": {
@@ -134,7 +130,6 @@ type PlatformInfo struct {
 	HardwareUUID        string   `json:"hardware_uuid"`
 	ProcessorFlags      string   `json:"process_flags"`
 	TPMVersion          string   `json:"tpm_version"`
-	PCRBanks            []string `json:"pcr_banks"`
 	NumberOfSockets     int      `json:"no_of_sockets,string"`
 	TPMEnabled          bool     `json:"tpm_enabled,string"`
 	TXTEnabled          bool     `json:"txt_enabled,string"`
@@ -146,7 +141,6 @@ type PlatformInfo struct {
 			Enabled bool `json:"enabled,string"`
 			Meta    struct {
 				TPMVersion string `json:"tpm_version"`
-				PCRBanks   string `json:"pcr_banks"`
 			} `json:"meta"`
 		} `json:"TPM"`
 		CBNT  *CBNT            `json:"CBNT,omitempty"`
@@ -156,52 +150,111 @@ type PlatformInfo struct {
 }
 
 func GetPlatformInfo() (*PlatformInfo, error) {
-	var err error
+	var err, rerr error
 	platformInfo := PlatformInfo{}
 
-	// TODO:  Handle error conditions...
-	platformInfo.ErrorCode = 0
-	platformInfo.OSName, _ = OSName()
-	platformInfo.OSVersion, _ = OSVersion()
-	platformInfo.BiosVersion, _ = BiosVersion()
-	platformInfo.VMMName, _ = VMMName()
-	platformInfo.VMMVersion, _ = VMMVersion()
-	platformInfo.ProcessorInfo, _ = ProcessorID()
-	platformInfo.HostName, _ = HostName()
-	platformInfo.BiosName, _ = BiosName()
-	platformInfo.HardwareUUID, _ = HardwareUUID()
+	platformInfo.OSName, rerr = OSName()
+	if rerr != nil {
+		err = errors.Wrap(err, "Error getting OS Name")
+	}
 
-	processorFlags, _ := ProcessorFlags()
+	platformInfo.OSVersion, rerr = OSVersion()
+	if rerr != nil {
+		err = errors.Wrap(rerr, "Error getting OS Version")
+	}
+
+	platformInfo.BiosVersion, rerr = BiosVersion()
+	if rerr != nil {
+		err = errors.Wrap(err, "Error getting BIOS Version")
+	}
+
+	platformInfo.VMMName, rerr = VMMName()
+	if rerr != nil {
+		err = errors.Wrap(err, "Error getting VMM Name")
+	}
+
+	platformInfo.VMMVersion, rerr = VMMVersion()
+	if rerr != nil {
+		return nil, errors.Wrap(err, "Error getting VMM Version")
+	}
+
+	platformInfo.ProcessorInfo, rerr = ProcessorID()
+	if rerr != nil {
+		return nil, errors.Wrap(err, "Error getting Processor ID")
+	}
+
+	platformInfo.HostName, rerr = HostName()
+	if rerr != nil {
+		return nil, errors.Wrap(err, "Error getting Host Name")
+	}
+
+	platformInfo.BiosName, rerr = BiosName()
+	if rerr != nil {
+		err = errors.Wrap(err, "Error getting BIOS Name")
+	}
+
+	platformInfo.HardwareUUID, rerr = HardwareUUID()
+	if rerr != nil {
+		err = errors.Wrap(err, "Error getting Hardware UUID")
+	}
+
+	processorFlags, rerr := ProcessorFlags()
+	if rerr != nil {
+		processorFlags = []string{}
+		err = errors.Wrap(err, "Error getting Processor Flags")
+	}
 	platformInfo.ProcessorFlags = strings.Join(processorFlags, " ")
 
-	platformInfo.TPMVersion, _ = TPMVersion()
-	platformInfo.PCRBanks = []string{"SHA1", "SHA256"}
-	platformInfo.NumberOfSockets, _ = NoOfSockets()
-	platformInfo.TPMEnabled, _ = TPMEnabled()
-	platformInfo.TXTEnabled, _ = TXTEnabled()
-	platformInfo.TbootInstalled, _ = TbootInstalled()
+	platformInfo.TPMVersion, rerr = TPMVersion()
+	if rerr != nil {
+		err = errors.Wrap(err, "Error getting TPM Version")
+	}
+
+	platformInfo.NumberOfSockets, rerr = NoOfSockets()
+	if rerr != nil {
+		err = errors.Wrap(err, "Error getting number of processor sockets")
+	}
+
+	platformInfo.TPMEnabled, rerr = TPMEnabled()
+	if rerr != nil {
+		err = errors.Wrap(err, "Error getting TPM Status")
+	}
+
+	platformInfo.TXTEnabled, rerr = TXTEnabled()
+	if rerr != nil {
+		err = errors.Wrap(err, "Error getting TXT Status")
+	}
+
+	platformInfo.TbootInstalled, rerr = TbootInstalled()
+	if rerr != nil {
+		err = errors.Wrap(err, "Error getting TBOOT status")
+	}
+
 	platformInfo.IsDockerEnvironment = fileExists("/.dockerenv")
 	platformInfo.HardwareFeatures.TXT.Enabled = platformInfo.TXTEnabled
 	platformInfo.HardwareFeatures.TPM.Enabled = platformInfo.TPMEnabled
 	platformInfo.HardwareFeatures.TPM.Meta.TPMVersion = platformInfo.TPMVersion
-	platformInfo.HardwareFeatures.TPM.Meta.PCRBanks = strings.Join(platformInfo.PCRBanks, "_")
 	platformInfo.InstalledComponents = []string{"tagent"}
 
-	platformInfo.HardwareFeatures.CBNT, err = GetCBNTHardwareFeature()
-	if err != nil {
-		return nil, errors.Wrapf(err, "Error getting CBNT information")
+	platformInfo.HardwareFeatures.CBNT, rerr = GetCBNTHardwareFeature()
+	if rerr != nil {
+		err = errors.Wrap(err, "Error getting CBNT information")
 	}
 
-	platformInfo.HardwareFeatures.SUEFI, err = GetSUEFIHardwareFeature()
-	if err != nil {
-		return nil, errors.Wrapf(err, "Error getting SUEFI information")
+	platformInfo.HardwareFeatures.SUEFI, rerr = GetSUEFIHardwareFeature()
+	if rerr != nil {
+		err = errors.Wrap(err, "Error getting SUEFI information")
 	}
 
 	if WLAIsInstalled() {
-		platformInfo.InstalledComponents = append(platformInfo.InstalledComponents, WLAGENT)
+		platformInfo.InstalledComponents = append(platformInfo.InstalledComponents, Wlagent)
 	}
 
-	return &platformInfo, nil
+	if err != nil {
+		platformInfo.ErrorCode = 1
+	}
+
+	return &platformInfo, err
 }
 
 func fileExists(filename string) bool {
@@ -214,7 +267,7 @@ func fileExists(filename string) bool {
 
 // Run 'which wlagent'.  If the command returns '0' (no error) then workload-agent is installed.
 func WLAIsInstalled() bool {
-	cmd := exec.Command("which", WLAGENT)
+	cmd := exec.Command("which", Wlagent)
 
 	err := cmd.Run()
 	if err != nil {

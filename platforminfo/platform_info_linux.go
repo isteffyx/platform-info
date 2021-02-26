@@ -103,7 +103,7 @@ func BiosVersion() (string, error) {
 	return biosVersion, err
 }
 
-// HardwareUUID retireves the host hardware UUID.
+// HardwareUUID retrieves the host hardware UUID.
 // An example of the host hardware UUID is 4219B2F5-C25F-6AF2-573C-35B0DF557236
 func HardwareUUID() (string, error) {
 	//Output of command:
@@ -300,7 +300,7 @@ func vmmInfo() (string, string, error) {
 	return "", "", nil
 }
 
-// HostName retireves the network hostname.
+// HostName retrieves the network hostname.
 // An example of the hostname is Redhat
 func HostName() (string, error) {
 	result, err := readAndParseFromCommandLine(hostNameCmd)
@@ -391,8 +391,8 @@ func ReadMSR(offset int64) (uint64, error) {
 	}
 
 	results := make([]byte, 8)
-	len, err := msr.Read(results)
-	if len < 8 {
+	length, err := msr.Read(results)
+	if length < 8 {
 		return 0, errors.New("platforminfo:ReadMSR(): Reading the msr returned the incorrect length")
 	} else if err != nil {
 		return 0, errors.Wrapf(err, "platforminfo:ReadMSR(): There was an error reading msr at offset %x", offset)
