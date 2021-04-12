@@ -11,6 +11,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/intel-secl/intel-secl/v3/pkg/lib/common/utils"
 )
 
 const (
@@ -118,23 +120,23 @@ type HardwareFeature struct {
 }
 
 type PlatformInfo struct {
-	ErrorCode           int      `json:"errorCode"`
-	OSName              string   `json:"os_name"`
-	OSVersion           string   `json:"os_version"`
-	BiosVersion         string   `json:"bios_version"`
-	VMMName             string   `json:"vmm_name"`
-	VMMVersion          string   `json:"vmm_version"`
-	ProcessorInfo       string   `json:"processor_info"`
-	HostName            string   `json:"host_name"`
-	BiosName            string   `json:"bios_name"`
-	HardwareUUID        string   `json:"hardware_uuid"`
-	ProcessorFlags      string   `json:"process_flags"`
-	TPMVersion          string   `json:"tpm_version"`
-	NumberOfSockets     int      `json:"no_of_sockets,string"`
-	TPMEnabled          bool     `json:"tpm_enabled,string"`
-	TXTEnabled          bool     `json:"txt_enabled,string"`
-	TbootInstalled      bool     `json:"tboot_installed,string"`
-	IsDockerEnvironment bool     `json:"is_docker_env,string"`
+	ErrorCode           int    `json:"errorCode"`
+	OSName              string `json:"os_name"`
+	OSVersion           string `json:"os_version"`
+	BiosVersion         string `json:"bios_version"`
+	VMMName             string `json:"vmm_name"`
+	VMMVersion          string `json:"vmm_version"`
+	ProcessorInfo       string `json:"processor_info"`
+	HostName            string `json:"host_name"`
+	BiosName            string `json:"bios_name"`
+	HardwareUUID        string `json:"hardware_uuid"`
+	ProcessorFlags      string `json:"process_flags"`
+	TPMVersion          string `json:"tpm_version"`
+	NumberOfSockets     int    `json:"no_of_sockets,string"`
+	TPMEnabled          bool   `json:"tpm_enabled,string"`
+	TXTEnabled          bool   `json:"txt_enabled,string"`
+	TbootInstalled      bool   `json:"tboot_installed,string"`
+	IsDockerEnvironment bool   `json:"is_docker_env,string"`
 	HardwareFeatures    struct {
 		TXT HardwareFeature `json:"TXT"`
 		TPM struct {
@@ -230,7 +232,7 @@ func GetPlatformInfo() (*PlatformInfo, error) {
 		err = errors.Wrap(err, "Error getting TBOOT status")
 	}
 
-	platformInfo.IsDockerEnvironment = fileExists("/.dockerenv")
+	platformInfo.IsDockerEnvironment = utils.IsContainerEnv()
 	platformInfo.HardwareFeatures.TXT.Enabled = platformInfo.TXTEnabled
 	platformInfo.HardwareFeatures.TPM.Enabled = platformInfo.TPMEnabled
 	platformInfo.HardwareFeatures.TPM.Meta.TPMVersion = platformInfo.TPMVersion
